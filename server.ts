@@ -170,7 +170,7 @@ app.post("/api/gemini/analyze", async (req, res) => {
     if (GEMINI_API_KEY && GEMINI_API_KEY !== "MY_GEMINI_API_KEY") {
       const { GoogleGenAI } = await import("@google/genai");
       const client = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
-      const model = client.getGenerativeModel({ model: config?.model || "gemini-1.5-flash" });
+      const model = (client as any).getGenerativeModel({ model: config?.model || "gemini-1.5-flash" });
       
       const result = await model.generateContent(prompt);
       const response = await result.response;
