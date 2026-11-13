@@ -14,6 +14,10 @@ const __dirname = path.dirname(__filename);
 
 const DB_PATH = path.join(__dirname, "db.json");
 const JWT_SECRET = process.env.JWT_SECRET || "skill-connect-secret-key";
+if (!process.env.JWT_SECRET && process.env.NODE_ENV === "production") {
+  console.warn("WARNING: JWT_SECRET is not set; using an insecure default. Set JWT_SECRET in production.");
+}
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 const GROQ_API_KEY = process.env.GROQ_API_KEY;
 
@@ -73,7 +77,16 @@ app.get("/api/health", (req, res) => {
 });
 
 app.post("/api/auth/register", async (req, res) => {
-  const { email, password, name } = req.body;
+  const { email, password, name } = req.body || {};
+  if (typeof email !== "string" || !EMAIL_RE.test(email)) {
+    return res.status(400).json({ message: "A valid email is required" });
+  }
+  if (typeof password !== "string" || password.length < 6) {
+    return res.status(400).json({ message: "Password must be at least 6 characters" });
+  }
+  if (typeof name !== "string" || !name.trim()) {
+    return res.status(400).json({ message: "Name is required" });
+  }
   const db = readDB();
   
   if (db.users.find((u: any) => u.email === email)) {
@@ -85,7 +98,7 @@ app.post("/api/auth/register", async (req, res) => {
     id: Date.now().toString(),
     email,
     password: hashedPassword,
-    name,
+    name: name.trim(),
     skills: [],
     education: "",
     interests: [],
@@ -100,7 +113,10 @@ app.post("/api/auth/register", async (req, res) => {
 });
 
 app.post("/api/auth/login", async (req, res) => {
-  const { email, password } = req.body;
+  const { email, password } = req.body || {};
+  if (typeof email !== "string" || typeof password !== "string") {
+    return res.status(400).json({ message: "Email and password are required" });
+  }
   const db = readDB();
   const user = db.users.find((u: any) => u.email === email);
 
