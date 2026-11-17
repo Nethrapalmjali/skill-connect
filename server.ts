@@ -77,7 +77,8 @@ app.get("/api/health", (req, res) => {
 });
 
 app.post("/api/auth/register", async (req, res) => {
-  const { email, password, name } = req.body || {};
+  const { email: rawEmail, password, name } = req.body || {};
+  const email = typeof rawEmail === "string" ? rawEmail.trim().toLowerCase() : rawEmail;
   if (typeof email !== "string" || !EMAIL_RE.test(email)) {
     return res.status(400).json({ message: "A valid email is required" });
   }
@@ -89,7 +90,7 @@ app.post("/api/auth/register", async (req, res) => {
   }
   const db = readDB();
   
-  if (db.users.find((u: any) => u.email === email)) {
+  if (db.users.find((u: any) => String(u.email).toLowerCase() === email)) {
     return res.status(400).json({ message: "User already exists" });
   }
 
@@ -113,12 +114,13 @@ app.post("/api/auth/register", async (req, res) => {
 });
 
 app.post("/api/auth/login", async (req, res) => {
-  const { email, password } = req.body || {};
-  if (typeof email !== "string" || typeof password !== "string") {
+  const { email: rawEmail, password } = req.body || {};
+  if (typeof rawEmail !== "string" || typeof password !== "string") {
     return res.status(400).json({ message: "Email and password are required" });
   }
+  const email = rawEmail.trim().toLowerCase();
   const db = readDB();
-  const user = db.users.find((u: any) => u.email === email);
+  const user = db.users.find((u: any) => String(u.email).toLowerCase() === email);
 
   if (!user || !(await bcrypt.compare(password, user.password))) {
     return res.status(400).json({ message: "Invalid credentials" });
