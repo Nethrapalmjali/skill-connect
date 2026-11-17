@@ -166,7 +166,10 @@ app.get("/api/courses", (req, res) => {
 
 app.post("/api/gemini/analyze", async (req, res) => {
   try {
-    const { prompt, config } = req.body;
+    const { prompt, config } = req.body || {};
+    if (typeof prompt !== "string" || !prompt.trim()) {
+      return res.status(400).json({ error: "A non-empty prompt is required" });
+    }
 
     if (GROQ_API_KEY) {
       const { default: Groq } = await import("groq-sdk");
