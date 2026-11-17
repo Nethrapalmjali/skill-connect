@@ -38,3 +38,7 @@ View your app in AI Studio: https://ai.studio/apps/d5d246e3-d9cb-4a85-ab71-f5355
 `GET /api/health`, `POST /api/auth/register`, `POST /api/auth/login`,
 `GET|PUT /api/user/profile` (auth), `GET /api/jobs`, `GET /api/courses`,
 `POST /api/gemini/analyze`.
+
+## License
+
+MIT – see [LICENSE](LICENSE).
