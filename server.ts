@@ -17,6 +17,8 @@ const JWT_SECRET = process.env.JWT_SECRET || "skill-connect-secret-key";
 if (!process.env.JWT_SECRET && process.env.NODE_ENV === "production") {
   console.warn("WARNING: JWT_SECRET is not set; using an insecure default. Set JWT_SECRET in production.");
 }
+// Auth tokens expire so a leaked token is not valid forever
+const TOKEN_TTL = "7d";
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 const GROQ_API_KEY = process.env.GROQ_API_KEY;
@@ -65,7 +67,7 @@ const authenticateToken = (req: any, res: any, next: any) => {
   if (!token) return res.sendStatus(401);
 
   jwt.verify(token, JWT_SECRET, (err: any, user: any) => {
-    if (err) return res.sendStatus(403);
+    if (err) return res.sendStatus(err.name === "TokenExpiredError" ? 401 : 403);
     req.user = user;
     next();
   });
@@ -109,7 +111,7 @@ app.post("/api/auth/register", async (req, res) => {
   db.users.push(newUser);
   writeDB(db);
 
-  const token = jwt.sign({ id: newUser.id, email: newUser.email }, JWT_SECRET);
+  const token = jwt.sign({ id: newUser.id, email: newUser.email }, JWT_SECRET, { expiresIn: TOKEN_TTL });
   res.json({ token, user: { id: newUser.id, email: newUser.email, name: newUser.name } });
 });
 
@@ -126,7 +128,7 @@ app.post("/api/auth/login", async (req, res) => {
     return res.status(400).json({ message: "Invalid credentials" });
   }
 
-  const token = jwt.sign({ id: user.id, email: user.email }, JWT_SECRET);
+  const token = jwt.sign({ id: user.id, email: user.email }, JWT_SECRET, { expiresIn: TOKEN_TTL });
   res.json({ token, user: { id: user.id, email: user.email, name: user.name } });
 });
 
