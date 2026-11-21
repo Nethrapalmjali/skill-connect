@@ -198,11 +198,11 @@ app.post("/api/gemini/analyze", async (req, res) => {
     if (GEMINI_API_KEY && GEMINI_API_KEY !== "MY_GEMINI_API_KEY") {
       const { GoogleGenAI } = await import("@google/genai");
       const client = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
-      const model = (client as any).getGenerativeModel({ model: config?.model || "gemini-1.5-flash" });
-      
-      const result = await model.generateContent(prompt);
-      const response = await result.response;
-      return res.json({ text: response.text() });
+      const response = await client.models.generateContent({
+        model: config?.model || "gemini-2.0-flash",
+        contents: prompt,
+      });
+      return res.json({ text: response.text });
     }
 
     return res.status(500).json({ error: "No valid AI API key configured" });
