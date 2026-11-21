@@ -153,6 +153,22 @@ app.put("/api/user/profile", authenticateToken, (req: any, res) => {
     if (req.body && key in req.body) updates[key] = req.body[key];
   }
 
+  const isStringArray = (v: unknown) => Array.isArray(v) && v.every((x) => typeof x === "string");
+  if ("name" in updates && (typeof updates.name !== "string" || !updates.name.trim())) {
+    return res.status(400).json({ message: "Name must be a non-empty string" });
+  }
+  if ("education" in updates && typeof updates.education !== "string") {
+    return res.status(400).json({ message: "Education must be a string" });
+  }
+  for (const key of ["skills", "interests"]) {
+    if (key in updates && !isStringArray(updates[key])) {
+      return res.status(400).json({ message: `${key} must be an array of strings` });
+    }
+  }
+  if ("assessments" in updates && !Array.isArray(updates.assessments)) {
+    return res.status(400).json({ message: "assessments must be an array" });
+  }
+
   db.users[userIndex] = { ...db.users[userIndex], ...updates };
   writeDB(db);
   res.json({ message: "Profile updated successfully" });
